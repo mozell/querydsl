@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.dto.MemberDto;
 import study.querydsl.dto.QMemberDto;
@@ -73,7 +74,7 @@ public class QuerydslBasicTest {
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
-    
+
     @Test
     public void startQuerydsl() throws Exception {
         QMember m = new QMember("m");
@@ -183,7 +184,7 @@ public class QuerydslBasicTest {
         List<Member> result = queryFactory
                 .selectFrom(member)
                 .where(member.age.eq(100))
-                .orderBy( member.age.desc(), member.username.asc().nullsLast() )
+                .orderBy(member.age.desc(), member.username.asc().nullsLast())
                 .fetch();
 
         Member member5 = result.get(0);
@@ -503,7 +504,7 @@ public class QuerydslBasicTest {
             System.out.println("username = " + username + " age = " + age + " rank = " + rank);
         }
     }
-    
+
     @Test
     public void constant() throws Exception {
         List<Tuple> result = queryFactory
@@ -612,10 +613,10 @@ public class QuerydslBasicTest {
                 .select(Projections.fields(UserDto.class,
                         member.username.as("name"),
                         ExpressionUtils.as(
-                                        JPAExpressions
-                                                .select(memberSub.age.max())
-                                                .from(memberSub), "age")
-                        ))
+                                JPAExpressions
+                                        .select(memberSub.age.max())
+                                        .from(memberSub), "age")
+                ))
                 .from(member)
                 .fetch();
 
@@ -688,4 +689,31 @@ public class QuerydslBasicTest {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    @Test
+    public void bulkUpdate() throws Exception {
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+    @Test
+    public void bulkAdd() throws Exception {
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+    }
+
+    @Test
+    public void bulkDelete() throws Exception {
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
 }
